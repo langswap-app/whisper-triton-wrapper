@@ -1,0 +1,40 @@
+# todo: add batching
+
+name: "whisper_large"
+backend: "python"
+
+input [
+  {
+    name: audio_signal
+    data_type: TYPE_INT32
+    dims: [ 1 ]
+  },
+  {
+    name: sampling_rate
+    data_type: TYPE_FP32
+    dims: [ -1 ]
+  },
+  {
+    name: language
+    data_type: TYPE_STRING
+    format: FORMAT_NONE
+    dims: [ -1 ]
+  }
+]
+
+output [
+  {
+    name: transcription
+    data_type: TYPE_STRING
+    format: FORMAT_NONE
+    dims: [ -1 ]
+  }
+]
+
+instance_group [
+  {
+      count: 1
+      kind: KIND_GPU
+      gpus: [ 0 ]
+    }
+]
