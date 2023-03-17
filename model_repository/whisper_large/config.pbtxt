@@ -5,17 +5,17 @@ backend: "python"
 
 input [
   {
-    name: audio_signal
+    name: "audio_signal"
     data_type: TYPE_INT32
     dims: [ 1 ]
   },
   {
-    name: sampling_rate
+    name: "sampling_rate"
     data_type: TYPE_FP32
     dims: [ -1 ]
   },
   {
-    name: language
+    name: "language"
     data_type: TYPE_STRING
     format: FORMAT_NONE
     dims: [ -1 ]
@@ -24,7 +24,7 @@ input [
 
 output [
   {
-    name: transcription
+    name: "transcription"
     data_type: TYPE_STRING
     format: FORMAT_NONE
     dims: [ -1 ]

@@ -4,5 +4,5 @@ WORKDIR /WHISPER
 RUN apt-get update || true
 RUN apt-get install libsndfile1 ffmpeg -y
 RUN pip install openai-whisper && pip install -r requirements.txt
-COPY model_repository/ model_repository/
+# COPY model_repository/ model_repository/
 CMD tritonserver --grpc-port=8085 --http-port=8005 --model-repository=model_repository/ --metrics-port=60189 --log-info=true
