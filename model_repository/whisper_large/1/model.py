@@ -71,7 +71,7 @@ class TritonPythonModel:
             )
 
             result = {
-                "text": " ".join([i["text"] for i in result_aligned["segments"][0]]),
+                "text": " ".join([i["text"] for i in result_aligned["segments"]]),
                 "word_segments": result_aligned["word_segments"]
             }
 
