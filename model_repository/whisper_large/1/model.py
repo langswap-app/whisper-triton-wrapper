@@ -70,10 +70,15 @@ class TritonPythonModel:
                 result["segments"], model_a, metadata, audio_signal, self._device
             )
 
+            result = {
+                "text": " ".join([i["text"] for i in result_aligned["segments"][0]]),
+                "word_segments": result_aligned["word_segments"]
+            }
+
             text_output = pb_utils.Tensor(
                 "transcription",
                 np.array(
-                    [json.dumps(result_aligned).encode("utf-8")], dtype=np.object_
+                    [json.dumps(result).encode("utf-8")], dtype=np.object_
                 )
             )
             inference_response = pb_utils.InferenceResponse(
