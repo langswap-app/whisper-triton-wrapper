@@ -1,23 +1,37 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import librosa
 import numpy as np
 import triton_python_backend_utils as pb_utils
-import whisper
+import whisperx
+
+import json
 
 
 THIS_DIR = Path(__file__).parent
 
 
 class TritonPythonModel:
-    _whisper_model: whisper.Whisper
+    _whisper_model: whisperx.Whisper
+    _align_models: Dict[str, Any]
+    _device: str
     _output_type: Any
 
     def initialize(self, args: Dict[str, Any]):
-        self._whisper_model = whisper.load_model(
-            str(THIS_DIR / "large-v2.pt"), device="cuda:0"
+        self._device = "cuda:0"
+        self._whisper_model = whisperx.load_model(
+            str(THIS_DIR / "large-v2.pt"), device=self._device
         )
+
+        self._align_models = {}
+
+    def load_align_model(self, language: str) -> Tuple[Any, Any]:
+        if language not in self._align_models:
+            self._align_models[language] = whisperx.load_align_model(
+                language_code=language, device=self._device
+            )
+        return self._align_models[language]
 
     def execute(self, requests: List[Any]):
         responses = []
@@ -39,20 +53,27 @@ class TritonPythonModel:
             ).as_numpy()
             language = language.astype('U')[0]
 
+            # Initialize align model
+            model_a, metadata = self.load_align_model(language)
+
             if sampling_rate != 16000:
                 audio_signal = librosa.resample(
                     audio_signal, sampling_rate, 16000
                 )
 
-            text_result = self._whisper_model.transcribe(
+            result = self._whisper_model.transcribe(
                 audio=audio_signal,
                 language=language,
-            )["text"]
+            )
+
+            result_aligned = whisperx.align(
+                result["segments"], model_a, metadata, audio_signal, self._device
+            )
 
             text_output = pb_utils.Tensor(
                 "transcription",
                 np.array(
-                    [text_result.encode("utf-8")], dtype=np.object_
+                    [json.dumps(result_aligned).encode("utf-8")], dtype=np.object_
                 )
             )
             inference_response = pb_utils.InferenceResponse(
