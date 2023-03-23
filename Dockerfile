@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tritonserver:23.02-pyt-python-py3
+FROM nvcr.io/nvidia/tritonserver:22.04-pyt-python-py3
 COPY . /WHISPER
 WORKDIR /WHISPER
 RUN apt-get update || true
