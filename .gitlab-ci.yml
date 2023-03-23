@@ -1,0 +1,43 @@
+variables:
+  DOCKER_HOST: "unix:///var/run/docker.sock"
+  DOCKER_DRIVER: overlay2
+  DS_NETWORK_NAME: ds-dev
+  DOCKER_TLS_CERTDIR: ""
+
+stages:
+  - build
+  - deploy
+
+image: docker:stable
+
+build:
+  stage: build
+  tags:
+    - ds
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+      #    - docker build -t $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA} .
+    - docker build -t $CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA .
+      #    - docker push $CI_REGISTRY_IMAGE
+  dependencies:
+    - prepare
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "feature/ci"
+
+deploy:
+  stage: deploy
+  tags:
+    - ds
+  script:
+    - docker network create $DS_NETWORK_NAME || true
+    - docker run 
+      -d
+      --name $CI_PROJECT_NAME
+      --network $DS_NETWORK_NAME
+      $CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "feature/ci"
