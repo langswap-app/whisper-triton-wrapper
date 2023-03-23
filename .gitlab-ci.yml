@@ -32,6 +32,7 @@ deploy:
     - docker network create $DS_NETWORK_NAME || true
     - docker run 
       -d
+      --gpus all
       --name $CI_PROJECT_NAME
       --network $DS_NETWORK_NAME
       $CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA
