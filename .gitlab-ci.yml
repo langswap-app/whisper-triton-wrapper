@@ -19,8 +19,6 @@ build:
       #    - docker build -t $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA} .
     - docker build -t $CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA .
       #    - docker push $CI_REGISTRY_IMAGE
-  dependencies:
-    - prepare
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
