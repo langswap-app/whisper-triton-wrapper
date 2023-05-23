@@ -22,7 +22,7 @@ build:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $CI_COMMIT_BRANCH == "feature/ci"
+    - if: $CI_COMMIT_BRANCH == "main"
 
 deploy:
   stage: deploy
@@ -41,4 +41,4 @@ deploy:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $CI_COMMIT_BRANCH == "feature/ci"
+    - if: $CI_COMMIT_BRANCH == "main"
