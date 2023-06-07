@@ -53,9 +53,6 @@ class TritonPythonModel:
             ).as_numpy()
             language = language.astype('U')[0]
 
-            # Initialize align model
-            model_a, metadata = self.load_align_model(language)
-
             if sampling_rate != 16000:
                 audio_signal = librosa.resample(
                     audio_signal, sampling_rate, 16000
@@ -63,8 +60,12 @@ class TritonPythonModel:
 
             result = self._whisper_model.transcribe(
                 audio=audio_signal,
-                language=language,
             )
+
+            language = result["language"] if language == "auto" else language
+
+            # Initialize align model
+            model_a, metadata = self.load_align_model(language)
 
             result_aligned = whisperx.align(
                 result["segments"], model_a, metadata, audio_signal, self._device
