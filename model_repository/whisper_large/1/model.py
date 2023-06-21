@@ -27,11 +27,9 @@ class TritonPythonModel:
         self._align_models = {}
 
     def load_align_model(self, language: str) -> Tuple[Any, Any]:
-        if language not in self._align_models:
-            self._align_models[language] = whisperx.load_align_model(
+        return whisperx.load_align_model(
                 language_code=language, device=self._device
-            )
-        return self._align_models[language]
+        )
 
     def execute(self, requests: List[Any]):
         responses = []
@@ -88,6 +86,6 @@ class TritonPythonModel:
             responses.append(inference_response)
 
             # TODO (a.gribul): Remove this dirty hack
-            self._align_models = {}
-
+            del model_a
+            
         return responses
