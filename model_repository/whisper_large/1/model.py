@@ -87,4 +87,7 @@ class TritonPythonModel:
             )
             responses.append(inference_response)
 
+            # TODO (a.gribul): Remove this dirty hack
+            self._align_models = {}
+
         return responses
