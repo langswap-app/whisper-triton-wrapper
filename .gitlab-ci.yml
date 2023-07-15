@@ -54,7 +54,7 @@ deploy:
       --gpus all
       --name $CI_PROJECT_NAME
       --network $DS_NETWORK_NAME
-      -p 8222:8085
+      -p 8035:8035
       $CI_REGISTRY_IMAGE:$CI_PIPELINE_ID
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
