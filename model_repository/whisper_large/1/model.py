@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+import gc
+import torch
 import librosa
 import numpy as np
 import triton_python_backend_utils as pb_utils
@@ -63,16 +65,29 @@ class TritonPythonModel:
             language = result["language"] if language == "auto" else language
 
             # Initialize align model
-            model_a, metadata = self.load_align_model(language)
+            try:
+                model_a, metadata = self.load_align_model(language)
 
-            result_aligned = whisperx.align(
-                result["segments"], model_a, metadata, audio_signal, self._device
-            )
+                result_aligned = whisperx.align(
+                    result["segments"], model_a, metadata, audio_signal, self._device
+                )
 
-            result = {
-                "text": " ".join([i["text"] for i in result_aligned["segments"]]),
-                "word_segments": result_aligned["word_segments"]
-            }
+                result = {
+                    "text": " ".join([i["text"] for i in result_aligned["segments"]]),
+                    "word_segments": result_aligned["word_segments"]
+                }
+
+            # If align model is not available, return unaligned result with empty word segments
+            except Exception as e:
+                result = {
+                    "text": "",
+                    "word_segments": ""
+                }
+
+            finally:
+                del model_a
+                torch.cuda.empty_cache()
+                gc.collect()
 
             text_output = pb_utils.Tensor(
                 "transcription",
@@ -84,8 +99,10 @@ class TritonPythonModel:
                 output_tensors=[text_output]
             )
             responses.append(inference_response)
-
-            # TODO (a.gribul): Remove this dirty hack
-            del model_a
             
         return responses
+
+    def finalize(self):
+        del self._whisper_model
+        torch.cuda.empty_cache()
+        gc.collect()
