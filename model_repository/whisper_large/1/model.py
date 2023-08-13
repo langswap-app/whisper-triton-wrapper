@@ -85,6 +85,8 @@ class TritonPythonModel:
                 }
 
             finally:
+                print(result)
+
                 del model_a
                 torch.cuda.empty_cache()
                 gc.collect()

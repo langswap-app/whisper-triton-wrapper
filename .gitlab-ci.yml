@@ -46,8 +46,8 @@ deploy:
     - docker rm -f whispertritonserving || true
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:$CI_PIPELINE_ID  
-      #- docker stop ls-ml-whisper-triton
-      #- docker rm ls-ml-whisper-triton  
+    - docker stop ls-ml-whisper-triton
+    - docker rm ls-ml-whisper-triton
     - docker run 
       -d
       --shm-size 8G
