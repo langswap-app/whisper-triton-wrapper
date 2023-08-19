@@ -16,6 +16,7 @@ THIS_DIR = Path(__file__).parent
 
 class TritonPythonModel:
     _whisper_model: whisperx.Whisper
+    _number_tokens: List[int]
     _align_models: Dict[str, Any]
     _device: str
     _output_type: Any
@@ -25,6 +26,9 @@ class TritonPythonModel:
         self._whisper_model = whisperx.load_model(
             str(THIS_DIR / "large-v2.pt"), device=self._device
         )
+        self._number_tokens = [-1] + json.loads(
+            (THIS_DIR / "number_tokens.json").read_text()
+        )["number_tokens"]
 
         self._align_models = {}
 
@@ -60,6 +64,7 @@ class TritonPythonModel:
 
             result = self._whisper_model.transcribe(
                 audio=audio_signal,
+                suppress_tokens=self._number_tokens,
             )
 
             language = result["language"] if language == "auto" else language
