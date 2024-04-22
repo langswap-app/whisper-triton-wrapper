@@ -18,6 +18,6 @@ WORKDIR /app
 
 COPY model_repository/ model_repository/
 
-RUN python3 download.py
+# RUN python3 download.py
 
 CMD PYTHONIOENCODING=UTF-8 tritonserver --grpc-port=8085 --http-port=8005 --model-repository=model_repository/ --metrics-port=60189 --log-info=true --model-control-mode=explicit

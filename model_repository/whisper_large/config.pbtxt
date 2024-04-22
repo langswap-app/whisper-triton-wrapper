@@ -1,5 +1,3 @@
-# todo: add batching
-
 name: "whisper_large"
 backend: "python"
 

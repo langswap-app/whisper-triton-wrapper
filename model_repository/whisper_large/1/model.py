@@ -6,36 +6,37 @@ import torch
 import librosa
 import numpy as np
 import triton_python_backend_utils as pb_utils
-import whisperx
+from faster_whisper import WhisperModel
 
 import json
 
 
 THIS_DIR = Path(__file__).parent
-
+MODEL_PATH = str(THIS_DIR / 'distil-whisper-large-v2/snapshots/fbac75ff0e24f79469c38f9c52517ae4c2b89198')
 
 class TritonPythonModel:
-    _whisper_model: whisperx.Whisper
+    _whisper_model: WhisperModel
     _number_tokens: List[int]
     _align_models: Dict[str, Any]
     _device: str
     _output_type: Any
 
     def initialize(self, args: Dict[str, Any]):
-        self._device = "cuda:0"
-        self._whisper_model = whisperx.load_model(
-            str(THIS_DIR / "large-v2.pt"), device=self._device
+        self._device = "cuda" #'cuda' if torch.cuda.is_available() else 'cpu'
+        self._whisper_model = WhisperModel(MODEL_PATH, 
+            device=self._device, 
+            compute_type="float16"
         )
         self._number_tokens = [-1] + json.loads(
             (THIS_DIR / "number_tokens.json").read_text()
         )["number_tokens"]
 
-        self._align_models = {}
-
-    def load_align_model(self, language: str) -> Tuple[Any, Any]:
-        return whisperx.load_align_model(
-                language_code=language, device=self._device
-        )
+    def extract_alignments(self, segments):
+        word_segments = []
+        for segment in segments:
+            for word in segment.words:
+                word_segments.append({'start': word.start, "end":word.end, 'word':word.word})
+        return word_segments
 
     def execute(self, requests: List[Any]):
         responses = []
@@ -59,42 +60,23 @@ class TritonPythonModel:
 
             if sampling_rate != 16000:
                 audio_signal = librosa.resample(
-                    audio_signal, sampling_rate, 16000
+                    audio_signal,
+                    orig_sr = sampling_rate, 
+                    target_sr = 16000
                 )
 
-            result = self._whisper_model.transcribe(
+            segments, info = self._whisper_model.transcribe(
                 audio=audio_signal,
                 suppress_tokens=self._number_tokens,
+                word_timestamps=True
             )
+            word_segments = self.extract_alignments(segments)
+            language = info.language if language == "auto" else language
 
-            language = result["language"] if language == "auto" else language
-
-            # Initialize align model
-            try:
-                model_a, metadata = self.load_align_model(language)
-
-                result_aligned = whisperx.align(
-                    result["segments"], model_a, metadata, audio_signal, self._device
-                )
-
-                result = {
-                    "text": " ".join([i["text"] for i in result_aligned["segments"]]),
-                    "word_segments": result_aligned["word_segments"]
-                }
-
-            # If align model is not available, return unaligned result with empty word segments
-            except Exception as e:
-                result = {
-                    "text": "",
-                    "word_segments": ""
-                }
-
-            finally:
-                print(result)
-
-                del model_a
-                torch.cuda.empty_cache()
-                gc.collect()
+            result = {
+                        "text": "".join([i['word'] for i in word_segments]),
+                        "word_segments": word_segments
+                    }
 
             text_output = pb_utils.Tensor(
                 "transcription",
@@ -106,7 +88,6 @@ class TritonPythonModel:
                 output_tensors=[text_output]
             )
             responses.append(inference_response)
-            
         return responses
 
     def finalize(self):
