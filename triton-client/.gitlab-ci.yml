@@ -1,0 +1,18 @@
+stages:
+  - build
+
+image: python:3.10.6
+
+build:
+  stage: build
+  tags:
+    - gitlab
+  script:
+    - pip install build poetry toml twine
+    - echo "current version - ${CI_PIPELINE_IID}"
+    - echo "current url link - ${PYPI_REPOSITORY}"
+    - python update_version.py
+    - poetry install
+    - poetry build
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+

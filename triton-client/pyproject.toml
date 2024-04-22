@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "ls-ml-tts-client"
+version = "0.1.0"
+description = ""
+authors = ["wscallop <wscallop@doublespeak.ai>"]
+readme = "README.md"
+packages = [{include = "tts_client"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
